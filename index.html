@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMI Calculator with Meal Plan</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 600px;
+        }
+
+        h1 {
+            color: #2d3436;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #636e72;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        input, select {
+            padding: 0.8rem;
+            border: 1px solid #dfe6e9;
+            border-radius: 8px;
+            font-size: 1rem;
+            flex: 1;
+        }
+
+        button {
+            background: #0984e3;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            width: 100%;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #0873c4;
+        }
+
+        .result {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+            background: #f8f9fa;
+            display: none;
+        }
+
+        .bmi-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .category {
+            text-align: center;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            border-radius: 5px;
+        }
+
+        .recommendation {
+            color: #636e72;
+            line-height: 1.6;
+        }
+
+        .meal-plan {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .day-box {
+            margin-bottom: 1.5rem;
+        }
+
+        .day-header {
+            color: #0984e3;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.3rem;
+            border-bottom: 2px solid #0984e3;
+        }
+
+        .meal-card {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .meal-type {
+            color: #00b894;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .meal-content {
+            color: #636e72;
+            line-height: 1.6;
+        }
+
+        .nutrition-note {
+            font-size: 0.9rem;
+            color: #636e72;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .healthy {
+            background: #55efc4;
+            color: #00b894;
+        }
+
+        .underweight {
+            background: #ffeaa7;
+            color: #fdcb6e;
+        }
+
+        .overweight {
+            background: #ff7675;
+            color: #d63031;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Health BMI Calculator</h1>
+        
+        <div class="input-group">
+            <label>Weight</label>
+            <div class="input-row">
+                <input type="number" id="weight" step="0.1" placeholder="Enter weight">
+                <select id="weight-unit">
+                    <option value="kg">kg</option>
+                    <option value="lbs">lbs</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Height</label>
+            <div class="input-row">
+                <select id="height-unit" style="margin-bottom: 10px;">
+                    <option value="cm">cm</option>
+                    <option value="ft">ft/in</option>
+                </select>
+            </div>
+            <div class="input-row" id="height-input">
+                <input type="number" id="height" placeholder="Height in cm">
+            </div>
+        </div>
+
+        <button onclick="calculateBMI()">Calculate BMI</button>
+
+        <div class="result" id="result">
+            <div class="bmi-value" id="bmi-value"></div>
+            <div class="category" id="category"></div>
+            <div class="recommendation" id="recommendation"></div>
+        </div>
+    </div>
+
+    <script>
+        const heightUnit = document.getElementById('height-unit');
+        const heightInput = document.getElementById('height-input');
+
+        heightUnit.addEventListener('change', () => {
+            if(heightUnit.value === 'cm') {
+                heightInput.innerHTML = `<input type="number" id="height" placeholder="Height in cm">`;
+            } else {
+                heightInput.innerHTML = `
+                    <input type="number" id="feet" placeholder="Feet">
+                    <input type="number" id="inches" placeholder="Inches">
+                `;
+            }
+        });
+
+        const mealPlans = {
+            underweight: {
+                calories: "2500-3000 kcal/day",
+                days: [
+                    {
+                        day: "Day 1",
+                        meals: {
+                            breakfast: "Oatmeal with nuts and dried fruits + Whole milk smoothie",
+                            snack: "Mixed nuts + Banana",
+                            lunch: "Grilled chicken with quinoa and roasted vegetables",
+                            snack2: "Greek yogurt with honey",
+                            dinner: "Salmon with sweet potato mash and steamed broccoli"
+                        }
+                    },
+                    {
+                        day: "Day 2",
+                        meals: {
+                            breakfast: "Avocado toast with eggs + Fruit juice",
+                            snack: "Trail mix + Protein shake",
+                            lunch: "Beef stir-fry with brown rice",
+                            snack2: "Cottage cheese with fruits",
+                            dinner: "Lentil curry with basmati rice"
+                        }
+                    }
+                ]
+            },
+            healthy: {
+                calories: "2000-2500 kcal/day",
+                days: [
+                    {
+                        day: "Day 1",
+                        meals: {
+                            breakfast: "Greek yogurt with berries and granola",
+                            snack: "Apple with almond butter",
+                            lunch: "Grilled chicken salad with olive oil dressing",
+                            snack2: "Hard-boiled eggs",
+                            dinner: "Baked cod with quinoa and asparagus"
+                        }
+                    },
+                    {
+                        day: "Day 2",
+                        meals: {
+                            breakfast: "Spinach and feta omelette + Whole grain toast",
+                            snack: "Carrot sticks with hummus",
+                            lunch: "Turkey wrap with whole wheat tortilla",
+                            snack2: "Dark chocolate (70%+)",
+                            dinner: "Grilled shrimp with zucchini noodles"
+                        }
+                    }
+                ]
+            },
+            overweight: {
+                calories: "1500-1800 kcal/day",
+                days: [
+                    {
+                        day: "Day 1",
+                        meals: {
+                            breakfast: "Vegetable omelette with egg whites",
+                            snack: "Celery sticks with peanut butter",
+                            lunch: "Grilled chicken Caesar salad (dressing on side)",
+                            snack2: "Small handful of almonds",
+                            dinner: "Baked salmon with steamed vegetables"
+                        }
+                    },
+                    {
+                        day: "Day 2",
+                        meals: {
+                            breakfast: "Chia seed pudding with almond milk",
+                            snack: "Cucumber slices with tzatziki",
+                            lunch: "Turkey lettuce wraps",
+                            snack2: "Green tea + Rice cake",
+                            dinner: "Grilled tofu with stir-fried vegetables"
+                        }
+                    }
+                ]
+            }
+        };
+
+        function generateMealPlan(category) {
+            const plan = mealPlans[category];
+            const mealPlanDiv = document.createElement('div');
+            mealPlanDiv.className = 'meal-plan';
+            
+            let html = `<h3>Recommended Meal Plan (${plan.calories})</h3>`;
+            
+            plan.days.forEach(day => {
+                html += `
+                    <div class="day-box">
+                        <div class="day-header">${day.day}</div>
+                        ${Object.entries(day.meals).map(([mealType, content]) => `
+                            <div class="meal-card">
+                                <div class="meal-type">${mealType.charAt(0).toUpperCase() + mealType.slice(1)}</div>
+                                <div class="meal-content">${content}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            });
+
+            html += `<div class="nutrition-note">
+                        Note: These are sample meal plans. Consult a nutritionist for personalized advice.
+                    </div>`;
+
+            mealPlanDiv.innerHTML = html;
+            return mealPlanDiv;
+        }
+
+        function calculateBMI() {
+            let weight = parseFloat(document.getElementById('weight').value);
+            const weightUnit = document.getElementById('weight-unit').value;
+            let height, heightM;
+
+            // Convert weight to kg
+            if(weightUnit === 'lbs') {
+                weight = weight * 0.453592;
+            }
+
+            // Handle height conversion
+            if(heightUnit.value === 'cm') {
+                height = parseFloat(document.getElementById('height').value);
+                heightM = height / 100;
+            } else {
+                const feet = parseFloat(document.getElementById('feet').value);
+                const inches = parseFloat(document.getElementById('inches').value);
+                heightM = (feet * 0.3048) + (inches * 0.0254);
+            }
+
+            const bmi = weight / (heightM * heightM);
+            const resultDiv = document.getElementById('result');
+            const bmiValue = document.getElementById('bmi-value');
+            const category = document.getElementById('category');
+            const recommendation = document.getElementById('recommendation');
+
+            resultDiv.style.display = 'block';
+            bmiValue.textContent = `BMI: ${bmi.toFixed(1)}`;
+
+            // Calculate healthy weight range
+            const minHealthy = 18.5 * (heightM * heightM);
+            const maxHealthy = 24.9 * (heightM * heightM);
+            let difference = 0;
+            
+            let categoryKey;
+            if(bmi < 18.5) {
+                category.textContent = 'Underweight';
+                category.className = 'category underweight';
+                difference = minHealthy - weight;
+                categoryKey = 'underweight';
+            } else if(bmi >= 18.5 && bmi <= 24.9) {
+                category.textContent = 'Healthy Weight';
+                category.className = 'category healthy';
+                categoryKey = 'healthy';
+            } else {
+                category.textContent = 'Overweight';
+                category.className = 'category overweight';
+                difference = weight - maxHealthy;
+                categoryKey = 'overweight';
+            }
+
+            // Create recommendation text
+            let recText = '';
+            if(difference > 0) {
+                const targetWeight = weightUnit === 'kg' ? 
+                    `${(weight + difference).toFixed(1)}kg` : 
+                    `${((weight + difference) * 2.20462).toFixed(1)}lbs`;
+                
+                const diffConverted = weightUnit === 'kg' ? 
+                    difference.toFixed(1) + 'kg' : 
+                    (difference * 2.20462).toFixed(1) + 'lbs';
+
+                recText = bmi < 18.5 ? 
+                    `You need to gain at least ${diffConverted} to reach a healthy weight.` :
+                    `You need to lose at least ${diffConverted} to reach a healthy weight.`;
+                
+                recText += ` Healthy weight range for your height: ${minHealthy.toFixed(1)}kg - ${maxHealthy.toFixed(1)}kg`;
+            } else {
+                recText = 'Maintain your current weight. Keep up the good work!';
+            }
+
+            recommendation.textContent = recText;
+
+            // Add meal plan
+            const existingMealPlan = resultDiv.querySelector('.meal-plan');
+            if(existingMealPlan) existingMealPlan.remove();
+            resultDiv.appendChild(generateMealPlan(categoryKey));
+        }
+    </script>
+</body>
+</html>
